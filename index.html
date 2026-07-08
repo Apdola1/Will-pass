@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سيمرّ · عدّاد الأحداث</title>
+  <meta name="description" content="أضِف حدثًا وشاهد الوقت المتبقّي على نهايته يتناقص لحظة بلحظة." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <header class="app-header">
+    <h1 class="brand">سيمرّ</h1>
+    <p class="tagline">كل شيء له نهاية — شاهد الوقت المتبقّي يذوب أمامك.</p>
+    <button id="addBtn" class="btn-primary" type="button">
+      <span class="plus">+</span> أضِف حدثًا
+    </button>
+  </header>
+
+  <main>
+    <section id="eventsGrid" class="events-grid" aria-live="polite"></section>
+
+    <div id="emptyState" class="empty-state">
+      <div class="empty-illustration">⏳</div>
+      <h2>لا توجد أحداث بعد</h2>
+      <p>ابدأ بإضافة أول حدث، وسيتكفّل العدّاد بالباقي.</p>
+    </div>
+  </main>
+
+  <!-- نافذة الإضافة / التعديل -->
+  <div id="modalOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">حدث جديد</h2>
+        <button id="closeModal" class="icon-btn" type="button" aria-label="إغلاق">×</button>
+      </div>
+
+      <form id="eventForm" class="event-form">
+        <label class="field">
+          <span>عنوان الحدث</span>
+          <input id="titleInput" type="text" maxlength="60" placeholder="مثال: نهاية الفصل الدراسي" required />
+        </label>
+
+        <label class="field">
+          <span>تاريخ ووقت البداية <em>(اختياري)</em></span>
+          <input id="startInput" type="datetime-local" />
+        </label>
+
+        <label class="field">
+          <span>تاريخ ووقت النهاية</span>
+          <input id="endInput" type="datetime-local" required />
+        </label>
+
+        <label class="field">
+          <span>لون مميّز</span>
+          <div id="colorPicker" class="color-picker"></div>
+        </label>
+
+        <p id="formError" class="form-error" hidden></p>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelBtn" class="btn-ghost">إلغاء</button>
+          <button type="submit" class="btn-primary">حفظ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <template id="cardTemplate">
+    <article class="event-card">
+      <span class="card-accent"></span>
+      <div class="card-top">
+        <h3 class="card-title"></h3>
+        <div class="card-menu">
+          <button class="icon-btn edit-btn" type="button" aria-label="تعديل">✎</button>
+          <button class="icon-btn delete-btn" type="button" aria-label="حذف">🗑</button>
+        </div>
+      </div>
+
+      <span class="card-status"></span>
+
+      <div class="countdown">
+        <div class="unit"><b class="days">00</b><span>يوم</span></div>
+        <div class="unit"><b class="hours">00</b><span>ساعة</span></div>
+        <div class="unit"><b class="minutes">00</b><span>دقيقة</span></div>
+        <div class="unit"><b class="seconds">00</b><span>ثانية</span></div>
+      </div>
+
+      <div class="progress">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="progress-label"></div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
