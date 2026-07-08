@@ -39,17 +39,17 @@
 }
 
 :root {
-  --bg: #0d1117;
-  --bg-soft: #151b24;
-  --card: #1a2230;
-  --card-2: #202a3a;
-  --text: #eef2f8;
-  --muted: #93a1b5;
-  --accent: #f0873b;
-  --accent-2: #ffb35c;
-  --danger: #ef5f63;
-  --ok: #57cc99;
-  --border: rgba(255, 255, 255, 0.08);
+  --bg: #000000;
+  --bg-soft: #0b0b0b;
+  --card: #101010;
+  --card-2: #161616;
+  --text: #ffffff;
+  --muted: #8f8f8f;
+  --accent: #ffffff;
+  --accent-2: #dcdcdc;
+  --danger: #6e6e6e;
+  --ok: #ffffff;
+  --border: rgba(255, 255, 255, 0.14);
   --radius: 20px;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
   --font-body: "Thmanyah Sans", "Segoe UI", system-ui, sans-serif;
@@ -60,7 +60,7 @@
 
 body {
   font-family: var(--font-body);
-  background: radial-gradient(1200px 800px at 80% -10%, #1b2637 0%, var(--bg) 55%);
+  background: radial-gradient(1200px 800px at 80% -10%, #141414 0%, var(--bg) 55%);
   color: var(--text);
   min-height: 100vh;
   padding: 32px 20px 80px;
@@ -71,16 +71,60 @@ body {
 /* كرات ضوئية في الخلفية */
 .bg-orbs { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
 .orb {
-  position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.35;
+  position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.10;
   animation: float 14s ease-in-out infinite;
 }
-.orb-1 { width: 380px; height: 380px; background: #f0873b; top: -120px; right: -80px; }
-.orb-2 { width: 320px; height: 320px; background: #4c7dff; bottom: -100px; left: -60px; animation-delay: -5s; }
-.orb-3 { width: 260px; height: 260px; background: #9b5cff; top: 40%; left: 55%; animation-delay: -9s; }
+.orb-1 { width: 380px; height: 380px; background: #ffffff; top: -120px; right: -80px; }
+.orb-2 { width: 320px; height: 320px; background: #ffffff; bottom: -100px; left: -60px; animation-delay: -5s; opacity: 0.06; }
+.orb-3 { width: 260px; height: 260px; background: #bbbbbb; top: 40%; left: 55%; animation-delay: -9s; opacity: 0.05; }
 @keyframes float {
   0%, 100% { transform: translateY(0) translateX(0); }
   50% { transform: translateY(-30px) translateX(20px); }
 }
+
+/* شاشة القفل */
+.lock-screen {
+  position: fixed; inset: 0; z-index: 100;
+  background: #000000;
+  display: grid; place-items: center; padding: 24px;
+}
+.lock-screen[hidden] { display: none; }
+.lock-box {
+  text-align: center; max-width: 340px; width: 100%;
+  animation: pop 0.4s ease both;
+}
+.lock-icon { font-size: 2.4rem; margin-bottom: 14px; filter: grayscale(1); }
+.lock-brand {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: clamp(2.4rem, 8vw, 3.2rem); color: var(--text); margin-bottom: 8px;
+}
+.lock-hint { color: var(--muted); font-size: 0.95rem; margin-bottom: 26px; }
+.lock-form { display: flex; flex-direction: column; gap: 12px; }
+.lock-form input {
+  font-family: inherit; font-size: 1.05rem; color: var(--text); text-align: center;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px; transition: 0.15s;
+}
+.lock-form input:focus { outline: none; border-color: var(--accent); background: rgba(255, 255, 255, 0.09); }
+.lock-form .btn-primary { justify-content: center; }
+.lock-error { color: #cfcfcf; font-size: 0.9rem; margin-top: 14px; }
+
+.auth-toggle { margin-top: 20px; font-size: 0.9rem; color: var(--muted); }
+.link-btn {
+  background: none; border: none; cursor: pointer;
+  font-family: inherit; font-size: 0.9rem; font-weight: 700;
+  color: var(--text); text-decoration: underline; padding: 0 4px;
+}
+.link-btn:hover { opacity: 0.8; }
+
+/* شريط المستخدم */
+.user-bar {
+  display: flex; align-items: center; gap: 12px; justify-content: flex-start;
+  max-width: 1080px; margin: 0 auto 4px; padding: 0 2px;
+}
+.user-bar[hidden] { display: none; }
+.user-email { color: var(--muted); font-size: 0.85rem; }
+.btn-ghost.small { padding: 7px 16px; font-size: 0.85rem; }
 
 /* الترويسة */
 .app-header { text-align: center; max-width: 720px; margin: 0 auto 44px; }
@@ -89,23 +133,21 @@ body {
   font-size: clamp(2.6rem, 7vw, 4rem);
   font-weight: 900;
   letter-spacing: -1px;
-  background: linear-gradient(120deg, var(--accent-2), var(--accent));
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
 }
 .tagline { color: var(--muted); font-size: 1.05rem; margin: 10px 0 26px; }
 
 /* الأزرار */
 .btn-primary {
   display: inline-flex; align-items: center; gap: 8px;
-  background: linear-gradient(120deg, var(--accent), var(--accent-2));
-  color: #1a1207; border: none; border-radius: 14px;
+  background: #ffffff;
+  color: #000000; border: none; border-radius: 14px;
   font-family: inherit; font-weight: 700; font-size: 1rem;
   padding: 12px 24px; cursor: pointer;
-  box-shadow: 0 10px 24px rgba(240, 135, 59, 0.35);
+  box-shadow: 0 10px 24px rgba(255, 255, 255, 0.14);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(240, 135, 59, 0.45); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(255, 255, 255, 0.22); }
 .btn-primary:active { transform: translateY(0); }
 .btn-primary .plus { font-size: 1.3rem; line-height: 1; }
 
@@ -155,9 +197,9 @@ body {
   margin: 10px 0 18px; padding: 4px 12px; border-radius: 999px;
   background: rgba(255, 255, 255, 0.05);
 }
-.card-status.live   { color: var(--ok);     background: rgba(87, 204, 153, 0.12); }
-.card-status.soon   { color: var(--accent-2); background: rgba(255, 179, 92, 0.12); }
-.card-status.ended  { color: var(--danger);  background: rgba(239, 95, 99, 0.12); }
+.card-status.live   { color: #ffffff; background: rgba(255, 255, 255, 0.14); }
+.card-status.soon   { color: #cfcfcf; background: rgba(255, 255, 255, 0.08); }
+.card-status.ended  { color: #7a7a7a; background: rgba(255, 255, 255, 0.05); }
 
 /* العدّاد */
 .countdown { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 20px; }
@@ -181,7 +223,7 @@ body {
 }
 .progress-bar {
   height: 100%; width: 0%;
-  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  background: linear-gradient(90deg, #8f8f8f, var(--accent));
   border-radius: 999px; transition: width 0.5s ease;
 }
 .progress-label { font-size: 0.78rem; color: var(--muted); text-align: center; margin-top: 8px; }
