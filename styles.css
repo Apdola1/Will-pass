@@ -248,30 +248,32 @@ body {
 .card-status.soon  { color: var(--muted); }
 .card-status.ended { color: var(--muted); }
 
-/* شبكة النقاط */
-.dot-grid {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  margin-bottom: 18px; min-height: 12px;
+/* الحلقة الدائرية المتحركة */
+.ring-wrap {
+  position: relative; width: 190px; height: 190px;
+  margin: 8px auto 6px;
 }
-.dot {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--dot-spent);
-  transition: background 0.4s ease, transform 0.4s ease;
+.ring { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track {
+  fill: none; stroke: var(--border); stroke-width: 6;
 }
-.dot.left { background: var(--dot-left); }
-.dot.pulse { animation: dotPulse 1.6s ease-in-out infinite; }
-@keyframes dotPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.35); opacity: 0.6; } }
-
-/* العدّاد الحي المصغّر */
-.countdown-lite {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  border-top: 1px solid var(--border); padding-top: 14px;
+.ring-prog {
+  fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
 }
-.cd-main { font-family: var(--font-display); font-weight: 900; font-size: 1.5rem; color: var(--text); }
-.cd-main b { font-size: 2rem; }
-.cd-clock {
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; text-align: center;
+}
+.ring-center .cd-days {
+  font-family: var(--font-display); font-weight: 900;
+  font-size: 3rem; line-height: 1; color: var(--text);
+}
+.ring-center .cd-days-label { font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
+.ring-center .cd-clock {
   font-variant-numeric: tabular-nums; letter-spacing: 1px;
-  font-size: 1.05rem; color: var(--muted);
+  font-size: 1rem; color: var(--muted);
 }
 
 /* الحالة الفارغة */

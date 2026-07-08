@@ -209,7 +209,9 @@ form.addEventListener("submit", async (e) => {
     return showError("تاريخ النهاية لازم يكون بعد تاريخ البداية.");
 
   try {
-    await saveEvent({ title, start, end });
+    const data = { title, start, end };
+    if (!editingId) data.createdAt = new Date().toISOString();
+    await saveEvent(data);
     closeModal();
   } catch (err) {
     showError("تعذّر الحفظ — تحقّق من اتصالك وقواعد Firestore.");
@@ -231,14 +233,14 @@ function render() {
   events.forEach((ev) => {
     const node = cardTpl.content.firstElementChild.cloneNode(true);
     const refs = {
-      card:    node,
-      title:   node.querySelector(".card-title"),
-      status:  node.querySelector(".card-status"),
-      dots:    node.querySelector(".dot-grid"),
-      days:    node.querySelector(".cd-days"),
-      clock:   node.querySelector(".cd-clock"),
-      lastDots: -1,
+      card:     node,
+      title:    node.querySelector(".card-title"),
+      status:   node.querySelector(".card-status"),
+      ringProg: node.querySelector(".ring-prog"),
+      days:     node.querySelector(".cd-days"),
+      clock:    node.querySelector(".cd-clock"),
     };
+    refs.ringProg.style.strokeDasharray = RING_CIRC;
     refs.title.textContent = ev.title;
     node.querySelector(".edit-btn").addEventListener("click", () => openModal(ev));
     node.querySelector(".delete-btn").addEventListener("click", () => remove(ev.id));
@@ -255,29 +257,8 @@ async function remove(id) {
   catch (err) { console.error(err); alert("تعذّر الحذف."); }
 }
 
-// ================= شبكة النقاط =================
-const DAY = 86400000;
-const MAX_DOTS = 100;
-
-function buildDots(container, totalDays, remainingDays, finished) {
-  let perDot = totalDays > MAX_DOTS ? Math.ceil(totalDays / MAX_DOTS) : 1;
-  const totalDots = Math.max(1, Math.ceil(totalDays / perDot));
-  const leftDots  = finished ? 0 : Math.min(totalDots, Math.max(0, Math.ceil(remainingDays / perDot)));
-  const spentDots = totalDots - leftDots;
-
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < totalDots; i++) {
-    const d = document.createElement("span");
-    d.className = "dot";
-    // النقاط المنقضية باهتة، والمتبقّية مضيئة
-    if (i >= spentDots) d.classList.add("left");
-    frag.appendChild(d);
-  }
-  container.innerHTML = "";
-  container.appendChild(frag);
-}
-
-// ================= العدّاد التنازلي =================
+// ================= الحلقة الدائرية + العدّاد =================
+const RING_CIRC = 2 * Math.PI * 45; // نصف القطر 45 في SVG
 const pad = (n) => String(n).padStart(2, "0");
 
 function tick() {
@@ -286,45 +267,42 @@ function tick() {
     const refs = cardRefs.get(ev.id);
     if (!refs) return;
 
-    const end = new Date(ev.end).getTime();
+    const end   = new Date(ev.end).getTime();
     const start = ev.start ? new Date(ev.start).getTime() : null;
+    // مرجع البداية للحلقة: البداية إن وُجدت، وإلا وقت الإنشاء
+    const effStart = start != null ? start
+                   : (ev.createdAt ? new Date(ev.createdAt).getTime() : null);
 
-    let status, statusClass, finished = false, remainingMs;
+    let status, statusClass, remainingMs, fraction;
     if (start && now < start) {
-      remainingMs = start - now; // العد حتى البداية
-      status = "يبدأ بعد"; statusClass = "soon";
+      remainingMs = start - now;                 // العد حتى البداية
+      status = "يبدأ بعد"; statusClass = "soon"; fraction = 1;
+      refs.card.classList.remove("is-finished");
     } else if (now >= end) {
-      remainingMs = 0; finished = true;
-      status = "انتهى ✓"; statusClass = "ended";
+      remainingMs = 0;
+      status = "انتهى ✓"; statusClass = "ended"; fraction = 0;
       refs.card.classList.add("is-finished");
     } else {
       remainingMs = end - now;
       status = start ? "جارٍ الآن" : "المتبقّي"; statusClass = "live";
       refs.card.classList.remove("is-finished");
+      fraction = (effStart != null && end > effStart)
+        ? (end - now) / (end - effStart)
+        : 1;
     }
+    fraction = Math.min(1, Math.max(0, fraction));
+
     refs.status.textContent = status;
     refs.status.className = "card-status " + statusClass;
+    refs.ringProg.style.strokeDashoffset = (RING_CIRC * (1 - fraction)).toFixed(2);
 
-    // العدّاد الحي
-    const s = Math.floor(remainingMs / 1000);
+    const s  = Math.floor(remainingMs / 1000);
     const days = Math.floor(s / 86400);
     const hh = Math.floor((s % 86400) / 3600);
     const mm = Math.floor((s % 3600) / 60);
     const ss = s % 60;
     refs.days.textContent = days;
     refs.clock.textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
-
-    // شبكة النقاط (تُعاد فقط عند تغيّر عدد الأيام)
-    const remainingDays = Math.ceil(remainingMs / DAY);
-    let totalDays;
-    if (start) totalDays = Math.max(1, Math.ceil((end - start) / DAY));
-    else totalDays = Math.max(1, remainingDays);
-
-    const sig = finished ? -1 : remainingDays;
-    if (refs.lastDots !== sig || (finished && refs.lastDots !== -1)) {
-      buildDots(refs.dots, totalDays, remainingDays, finished);
-      refs.lastDots = sig;
-    }
   });
 }
 
