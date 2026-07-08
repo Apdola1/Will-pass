@@ -22,8 +22,6 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-const COLORS = ["#ffffff", "#d0d0d0", "#a0a0a0", "#e8e8e8", "#b8b8b8", "#787878"];
-
 // ---------- عناصر الواجهة ----------
 const grid       = document.getElementById("eventsGrid");
 const emptyState = document.getElementById("emptyState");
@@ -32,12 +30,10 @@ const form       = document.getElementById("eventForm");
 const titleInput = document.getElementById("titleInput");
 const startInput = document.getElementById("startInput");
 const endInput   = document.getElementById("endInput");
-const colorPicker= document.getElementById("colorPicker");
 const formError  = document.getElementById("formError");
 const modalTitle = document.getElementById("modalTitle");
 const cardTpl    = document.getElementById("cardTemplate");
 
-// عناصر المصادقة
 const authScreen    = document.getElementById("authScreen");
 const authForm      = document.getElementById("authForm");
 const emailInput    = document.getElementById("emailInput");
@@ -50,18 +46,31 @@ const authToggleText= document.getElementById("authToggleText");
 const userBar       = document.getElementById("userBar");
 const userEmail     = document.getElementById("userEmail");
 const signOutBtn    = document.getElementById("signOutBtn");
+const themeToggle   = document.getElementById("themeToggle");
 
 // ---------- الحالة ----------
 let events = [];
 let editingId = null;
-let selectedColor = COLORS[0];
 const cardRefs = new Map();
 let currentUser = null;
 let unsubEvents = null;
 
-// ================= المصادقة =================
-let mode = "login"; // login | signup
+// ================= النمط (فاتح / ليلي) =================
+const THEME_KEY = "willpass.theme";
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeToggle.textContent = t === "dark" ? "☀️" : "🌙";
+}
+let theme = localStorage.getItem(THEME_KEY) || "light";
+applyTheme(theme);
+themeToggle.addEventListener("click", () => {
+  theme = theme === "dark" ? "light" : "dark";
+  localStorage.setItem(THEME_KEY, theme);
+  applyTheme(theme);
+});
 
+// ================= المصادقة =================
+let mode = "login";
 function setMode(m) {
   mode = m;
   authError.hidden = true;
@@ -79,7 +88,6 @@ function setMode(m) {
     passInput.autocomplete = "new-password";
   }
 }
-
 authToggleBtn.addEventListener("click", () => setMode(mode === "login" ? "signup" : "login"));
 
 function authErrorMessage(code) {
@@ -104,11 +112,8 @@ authForm.addEventListener("submit", async (e) => {
   const email = emailInput.value.trim();
   const pass  = passInput.value;
   try {
-    if (mode === "signup") {
-      await createUserWithEmailAndPassword(auth, email, pass);
-    } else {
-      await signInWithEmailAndPassword(auth, email, pass);
-    }
+    if (mode === "signup") await createUserWithEmailAndPassword(auth, email, pass);
+    else                   await signInWithEmailAndPassword(auth, email, pass);
     passInput.value = "";
   } catch (err) {
     authError.textContent = authErrorMessage(err.code);
@@ -120,7 +125,6 @@ authForm.addEventListener("submit", async (e) => {
 
 signOutBtn.addEventListener("click", () => signOut(auth));
 
-// تغيّر حالة تسجيل الدخول
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (user) {
@@ -170,48 +174,34 @@ async function deleteEvent(id) {
   await deleteDoc(doc(db, "users", currentUser.uid, "events", id));
 }
 
-// ================= النافذة المنبثقة =================
-function buildColorPicker() {
-  colorPicker.innerHTML = "";
-  COLORS.forEach((c) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.style.background = c;
-    b.classList.toggle("selected", c === selectedColor);
-    b.addEventListener("click", () => {
-      selectedColor = c;
-      [...colorPicker.children].forEach((x) => x.classList.remove("selected"));
-      b.classList.add("selected");
-    });
-    colorPicker.appendChild(b);
-  });
+// ================= التواريخ (تاريخ فقط) =================
+// البداية = بداية اليوم، النهاية = نهاية اليوم
+function startISOFromDate(str) { return new Date(str + "T00:00:00").toISOString(); }
+function endISOFromDate(str)   { return new Date(str + "T23:59:59.999").toISOString(); }
+function toDateInput(iso) {
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset() * 60000;
+  return new Date(d - off).toISOString().slice(0, 10);
 }
 
+// ================= النافذة المنبثقة =================
 function openModal(ev = null) {
   editingId = ev ? ev.id : null;
   modalTitle.textContent = ev ? "تعديل الحدث" : "حدث جديد";
   titleInput.value = ev ? ev.title : "";
-  startInput.value = ev && ev.start ? toLocalInput(ev.start) : "";
-  endInput.value   = ev ? toLocalInput(ev.end) : "";
-  selectedColor    = ev ? ev.color : COLORS[0];
+  startInput.value = ev && ev.start ? toDateInput(ev.start) : "";
+  endInput.value   = ev ? toDateInput(ev.end) : "";
   formError.hidden = true;
-  buildColorPicker();
   overlay.hidden = false;
   setTimeout(() => titleInput.focus(), 50);
 }
 function closeModal() { overlay.hidden = true; editingId = null; }
 
-function toLocalInput(iso) {
-  const d = new Date(iso);
-  const off = d.getTimezoneOffset() * 60000;
-  return new Date(d - off).toISOString().slice(0, 16);
-}
-
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
-  const start = startInput.value ? new Date(startInput.value).toISOString() : null;
-  const end   = endInput.value ? new Date(endInput.value).toISOString() : null;
+  const start = startInput.value ? startISOFromDate(startInput.value) : null;
+  const end   = endInput.value ? endISOFromDate(endInput.value) : null;
 
   if (!title) return showError("اكتب عنوانًا للحدث.");
   if (!end)   return showError("حدّد تاريخ النهاية.");
@@ -219,22 +209,20 @@ form.addEventListener("submit", async (e) => {
     return showError("تاريخ النهاية لازم يكون بعد تاريخ البداية.");
 
   try {
-    await saveEvent({ title, start, end, color: selectedColor });
+    await saveEvent({ title, start, end });
     closeModal();
   } catch (err) {
     showError("تعذّر الحفظ — تحقّق من اتصالك وقواعد Firestore.");
     console.error(err);
   }
 });
-
 function showError(msg) { formError.textContent = msg; formError.hidden = false; }
 
-// ================= الرسم =================
+// ================= الرسم ================
 function render() {
   grid.innerHTML = "";
   cardRefs.clear();
   emptyState.style.display = events.length ? "none" : "block";
-  // إعادة نص الحالة الفارغة الافتراضي
   if (!events.length && currentUser) {
     emptyState.querySelector("h2").textContent = "لا توجد أحداث بعد";
     emptyState.querySelector("p").textContent = "ابدأ بإضافة أول حدث، وسيتكفّل العدّاد بالباقي.";
@@ -244,20 +232,14 @@ function render() {
     const node = cardTpl.content.firstElementChild.cloneNode(true);
     const refs = {
       card:    node,
-      accent:  node.querySelector(".card-accent"),
       title:   node.querySelector(".card-title"),
       status:  node.querySelector(".card-status"),
-      days:    node.querySelector(".days"),
-      hours:   node.querySelector(".hours"),
-      minutes: node.querySelector(".minutes"),
-      seconds: node.querySelector(".seconds"),
-      bar:     node.querySelector(".progress-bar"),
-      label:   node.querySelector(".progress-label"),
+      dots:    node.querySelector(".dot-grid"),
+      days:    node.querySelector(".cd-days"),
+      clock:   node.querySelector(".cd-clock"),
+      lastDots: -1,
     };
     refs.title.textContent = ev.title;
-    refs.accent.style.background = ev.color;
-    refs.bar.style.background = `linear-gradient(90deg, ${ev.color}, #ffffffaa)`;
-
     node.querySelector(".edit-btn").addEventListener("click", () => openModal(ev));
     node.querySelector(".delete-btn").addEventListener("click", () => remove(ev.id));
 
@@ -273,17 +255,30 @@ async function remove(id) {
   catch (err) { console.error(err); alert("تعذّر الحذف."); }
 }
 
+// ================= شبكة النقاط =================
+const DAY = 86400000;
+const MAX_DOTS = 100;
+
+function buildDots(container, totalDays, remainingDays, finished) {
+  let perDot = totalDays > MAX_DOTS ? Math.ceil(totalDays / MAX_DOTS) : 1;
+  const totalDots = Math.max(1, Math.ceil(totalDays / perDot));
+  const leftDots  = finished ? 0 : Math.min(totalDots, Math.max(0, Math.ceil(remainingDays / perDot)));
+  const spentDots = totalDots - leftDots;
+
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < totalDots; i++) {
+    const d = document.createElement("span");
+    d.className = "dot";
+    // النقاط المنقضية باهتة، والمتبقّية مضيئة
+    if (i >= spentDots) d.classList.add("left");
+    frag.appendChild(d);
+  }
+  container.innerHTML = "";
+  container.appendChild(frag);
+}
+
 // ================= العدّاد التنازلي =================
 const pad = (n) => String(n).padStart(2, "0");
-
-function setUnit(el, val) {
-  const v = pad(val);
-  if (el.textContent !== v) {
-    el.textContent = v;
-    el.classList.add("tick");
-    setTimeout(() => el.classList.remove("tick"), 200);
-  }
-}
 
 function tick() {
   const now = Date.now();
@@ -293,44 +288,42 @@ function tick() {
 
     const end = new Date(ev.end).getTime();
     const start = ev.start ? new Date(ev.start).getTime() : null;
-    let remaining, status, statusClass, progress = null;
 
+    let status, statusClass, finished = false, remainingMs;
     if (start && now < start) {
-      remaining = start - now;
-      status = "يبدأ بعد";
-      statusClass = "soon";
+      remainingMs = start - now; // العد حتى البداية
+      status = "يبدأ بعد"; statusClass = "soon";
     } else if (now >= end) {
-      remaining = 0;
-      status = "انتهى ✓";
-      statusClass = "ended";
+      remainingMs = 0; finished = true;
+      status = "انتهى ✓"; statusClass = "ended";
       refs.card.classList.add("is-finished");
-      progress = 100;
     } else {
-      remaining = end - now;
-      status = start ? "جارٍ الآن" : "المتبقّي";
-      statusClass = "live";
+      remainingMs = end - now;
+      status = start ? "جارٍ الآن" : "المتبقّي"; statusClass = "live";
       refs.card.classList.remove("is-finished");
-      if (start) progress = ((now - start) / (end - start)) * 100;
     }
-
     refs.status.textContent = status;
     refs.status.className = "card-status " + statusClass;
 
-    const s = Math.floor(remaining / 1000);
-    setUnit(refs.days,    Math.floor(s / 86400));
-    setUnit(refs.hours,   Math.floor((s % 86400) / 3600));
-    setUnit(refs.minutes, Math.floor((s % 3600) / 60));
-    setUnit(refs.seconds, s % 60);
+    // العدّاد الحي
+    const s = Math.floor(remainingMs / 1000);
+    const days = Math.floor(s / 86400);
+    const hh = Math.floor((s % 86400) / 3600);
+    const mm = Math.floor((s % 3600) / 60);
+    const ss = s % 60;
+    refs.days.textContent = days;
+    refs.clock.textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 
-    if (progress === null) {
-      refs.bar.parentElement.style.display = "none";
-      refs.label.style.display = "none";
-    } else {
-      refs.bar.parentElement.style.display = "";
-      refs.label.style.display = "";
-      const p = Math.min(100, Math.max(0, progress));
-      refs.bar.style.width = p.toFixed(1) + "%";
-      refs.label.textContent = now >= end ? "اكتمل" : `مضى ${p.toFixed(0)}٪`;
+    // شبكة النقاط (تُعاد فقط عند تغيّر عدد الأيام)
+    const remainingDays = Math.ceil(remainingMs / DAY);
+    let totalDays;
+    if (start) totalDays = Math.max(1, Math.ceil((end - start) / DAY));
+    else totalDays = Math.max(1, remainingDays);
+
+    const sig = finished ? -1 : remainingDays;
+    if (refs.lastDots !== sig || (finished && refs.lastDots !== -1)) {
+      buildDots(refs.dots, totalDays, remainingDays, finished);
+      refs.lastDots = sig;
     }
   });
 }

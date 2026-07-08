@@ -1,18 +1,15 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>سيمضي · عدّاد الأحداث</title>
   <meta name="description" content="أضِف حدثًا وشاهد الوقت المتبقّي على نهايته يتناقص لحظة بلحظة." />
+  <script>try{var t=localStorage.getItem('willpass.theme')||'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}</script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="bg-orbs" aria-hidden="true">
-    <span class="orb orb-1"></span>
-    <span class="orb orb-2"></span>
-    <span class="orb orb-3"></span>
-  </div>
+  <button id="themeToggle" class="theme-toggle" type="button" aria-label="تبديل النمط">🌙</button>
 
   <!-- شاشة تسجيل الدخول / إنشاء حساب -->
   <div id="authScreen" class="auth-screen">
@@ -87,18 +84,13 @@
         </label>
 
         <label class="field">
-          <span>تاريخ ووقت البداية <em>(اختياري)</em></span>
-          <input id="startInput" type="datetime-local" />
+          <span>تاريخ البداية <em>(اختياري)</em></span>
+          <input id="startInput" type="date" />
         </label>
 
         <label class="field">
-          <span>تاريخ ووقت النهاية</span>
-          <input id="endInput" type="datetime-local" required />
-        </label>
-
-        <label class="field">
-          <span>لون مميّز</span>
-          <div id="colorPicker" class="color-picker"></div>
+          <span>تاريخ النهاية</span>
+          <input id="endInput" type="date" required />
         </label>
 
         <p id="formError" class="form-error" hidden></p>
@@ -124,17 +116,12 @@
 
       <span class="card-status"></span>
 
-      <div class="countdown">
-        <div class="unit"><b class="days">00</b><span>يوم</span></div>
-        <div class="unit"><b class="hours">00</b><span>ساعة</span></div>
-        <div class="unit"><b class="minutes">00</b><span>دقيقة</span></div>
-        <div class="unit"><b class="seconds">00</b><span>ثانية</span></div>
-      </div>
+      <div class="dot-grid" aria-hidden="true"></div>
 
-      <div class="progress">
-        <div class="progress-bar"></div>
+      <div class="countdown-lite">
+        <span class="cd-main"><b class="cd-days">0</b> يوم</span>
+        <span class="cd-clock">00:00:00</span>
       </div>
-      <div class="progress-label"></div>
     </article>
   </template>
 
