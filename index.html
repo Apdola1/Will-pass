@@ -15,16 +15,33 @@
   </div>
 
   <!-- شاشة تسجيل الدخول / إنشاء حساب -->
-  <div id="authScreen" class="lock-screen">
-    <div class="lock-box">
-      <h1 class="lock-brand">سيمضي</h1>
-      <p class="lock-hint" id="authHint">سجّل دخولك للمتابعة</p>
-      <form id="authForm" class="lock-form">
-        <input id="emailInput" type="email" placeholder="البريد الإلكتروني" autocomplete="email" required />
-        <input id="passInput" type="password" placeholder="كلمة المرور" autocomplete="current-password" required minlength="6" />
-        <button type="submit" class="btn-primary" id="authSubmit">دخول</button>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-badge">
+        <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"></circle>
+          <path d="M12 7v5l3 2"></path>
+        </svg>
+      </div>
+      <h1 class="auth-brand">سيمضي</h1>
+      <p class="auth-hint" id="authHint">سجّل دخولك للمتابعة</p>
+
+      <form id="authForm" class="auth-form">
+        <label class="auth-field">
+          <span>البريد الإلكتروني</span>
+          <input id="emailInput" type="email" placeholder="you@example.com" autocomplete="email" required />
+        </label>
+        <label class="auth-field">
+          <span>كلمة المرور</span>
+          <input id="passInput" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" />
+        </label>
+        <button type="submit" class="btn-primary auth-submit" id="authSubmit">دخول</button>
       </form>
-      <p id="authError" class="lock-error" hidden></p>
+
+      <p id="authError" class="auth-error" hidden></p>
+
+      <div class="auth-divider"><span>أو</span></div>
+
       <p class="auth-toggle">
         <span id="authToggleText">ما عندك حساب؟</span>
         <button type="button" id="authToggleBtn" class="link-btn">أنشئ حساب</button>
