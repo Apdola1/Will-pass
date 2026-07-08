@@ -275,6 +275,15 @@ body {
   font-variant-numeric: tabular-nums; letter-spacing: 1px;
   font-size: 1rem; color: var(--muted);
 }
+.ring-caption {
+  text-align: center; color: var(--muted); font-size: 0.9rem;
+  margin-top: 4px;
+}
+.ring-caption b {
+  color: var(--text); font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  direction: ltr; display: inline-block; unicode-bidi: isolate;
+}
 
 /* الحالة الفارغة */
 .empty-state { text-align: center; color: var(--muted); padding: 60px 20px; }

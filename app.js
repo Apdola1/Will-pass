@@ -174,15 +174,17 @@ async function deleteEvent(id) {
   await deleteDoc(doc(db, "users", currentUser.uid, "events", id));
 }
 
-// ================= التواريخ (تاريخ فقط) =================
-// البداية = بداية اليوم، النهاية = نهاية اليوم
+// ================= التواريخ =================
+// البداية: تاريخ فقط (بداية اليوم). النهاية: تاريخ + وقت محدّد.
 function startISOFromDate(str) { return new Date(str + "T00:00:00").toISOString(); }
-function endISOFromDate(str)   { return new Date(str + "T23:59:59.999").toISOString(); }
-function toDateInput(iso) {
+function endISOFromDateTime(str) { return new Date(str).toISOString(); }
+function toLocal(iso, len) {
   const d = new Date(iso);
   const off = d.getTimezoneOffset() * 60000;
-  return new Date(d - off).toISOString().slice(0, 10);
+  return new Date(d - off).toISOString().slice(0, len);
 }
+const toDateInput     = (iso) => toLocal(iso, 10); // YYYY-MM-DD
+const toDateTimeInput = (iso) => toLocal(iso, 16); // YYYY-MM-DDTHH:mm
 
 // ================= النافذة المنبثقة =================
 function openModal(ev = null) {
@@ -190,7 +192,7 @@ function openModal(ev = null) {
   modalTitle.textContent = ev ? "تعديل الحدث" : "حدث جديد";
   titleInput.value = ev ? ev.title : "";
   startInput.value = ev && ev.start ? toDateInput(ev.start) : "";
-  endInput.value   = ev ? toDateInput(ev.end) : "";
+  endInput.value   = ev ? toDateTimeInput(ev.end) : "";
   formError.hidden = true;
   overlay.hidden = false;
   setTimeout(() => titleInput.focus(), 50);
@@ -201,7 +203,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const title = titleInput.value.trim();
   const start = startInput.value ? startISOFromDate(startInput.value) : null;
-  const end   = endInput.value ? endISOFromDate(endInput.value) : null;
+  const end   = endInput.value ? endISOFromDateTime(endInput.value) : null;
 
   if (!title) return showError("اكتب عنوانًا للحدث.");
   if (!end)   return showError("حدّد تاريخ النهاية.");
@@ -239,6 +241,7 @@ function render() {
       ringProg: node.querySelector(".ring-prog"),
       days:     node.querySelector(".cd-days"),
       clock:    node.querySelector(".cd-clock"),
+      percent:  node.querySelector(".cd-percent"),
     };
     refs.ringProg.style.strokeDasharray = RING_CIRC;
     refs.title.textContent = ev.title;
@@ -295,6 +298,7 @@ function tick() {
     refs.status.textContent = status;
     refs.status.className = "card-status " + statusClass;
     refs.ringProg.style.strokeDashoffset = (RING_CIRC * (1 - fraction)).toFixed(2);
+    refs.percent.textContent = Math.round((1 - fraction) * 100) + "%";
 
     const s  = Math.floor(remainingMs / 1000);
     const days = Math.floor(s / 86400);
