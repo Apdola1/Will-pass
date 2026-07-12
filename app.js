@@ -235,15 +235,16 @@ function render() {
   events.forEach((ev) => {
     const node = cardTpl.content.firstElementChild.cloneNode(true);
     const refs = {
-      card:     node,
-      title:    node.querySelector(".card-title"),
-      status:   node.querySelector(".card-status"),
-      ringProg: node.querySelector(".ring-prog"),
-      days:     node.querySelector(".cd-days"),
-      clock:    node.querySelector(".cd-clock"),
-      percent:  node.querySelector(".cd-percent"),
+      card:    node,
+      title:   node.querySelector(".card-title"),
+      status:  node.querySelector(".card-status"),
+      days:    node.querySelector(".days"),
+      hours:   node.querySelector(".hours"),
+      minutes: node.querySelector(".minutes"),
+      seconds: node.querySelector(".seconds"),
+      bar:     node.querySelector(".progress-bar"),
+      label:   node.querySelector(".progress-label"),
     };
-    refs.ringProg.style.strokeDasharray = RING_CIRC;
     refs.title.textContent = ev.title;
     node.querySelector(".edit-btn").addEventListener("click", () => openModal(ev));
     node.querySelector(".delete-btn").addEventListener("click", () => remove(ev.id));
@@ -260,9 +261,17 @@ async function remove(id) {
   catch (err) { console.error(err); alert("تعذّر الحذف."); }
 }
 
-// ================= الحلقة الدائرية + العدّاد =================
-const RING_CIRC = 2 * Math.PI * 45; // نصف القطر 45 في SVG
+// ================= العدّاد التنازلي =================
 const pad = (n) => String(n).padStart(2, "0");
+
+function setUnit(el, val) {
+  const v = pad(val);
+  if (el.textContent !== v) {
+    el.textContent = v;
+    el.classList.add("tick");
+    setTimeout(() => el.classList.remove("tick"), 200);
+  }
+}
 
 function tick() {
   const now = Date.now();
@@ -272,41 +281,46 @@ function tick() {
 
     const end   = new Date(ev.end).getTime();
     const start = ev.start ? new Date(ev.start).getTime() : null;
-    // مرجع البداية للحلقة: البداية إن وُجدت، وإلا وقت الإنشاء
+    // مرجع البداية للنسبة: البداية إن وُجدت، وإلا وقت الإنشاء
     const effStart = start != null ? start
                    : (ev.createdAt ? new Date(ev.createdAt).getTime() : null);
 
-    let status, statusClass, remainingMs, fraction;
+    let status, statusClass, remainingMs, progress = null;
     if (start && now < start) {
       remainingMs = start - now;                 // العد حتى البداية
-      status = "يبدأ بعد"; statusClass = "soon"; fraction = 1;
+      status = "يبدأ بعد"; statusClass = "soon";
       refs.card.classList.remove("is-finished");
     } else if (now >= end) {
-      remainingMs = 0;
-      status = "انتهى ✓"; statusClass = "ended"; fraction = 0;
+      remainingMs = 0; progress = 100;
+      status = "انتهى ✓"; statusClass = "ended";
       refs.card.classList.add("is-finished");
     } else {
       remainingMs = end - now;
       status = start ? "جارٍ الآن" : "المتبقّي"; statusClass = "live";
       refs.card.classList.remove("is-finished");
-      fraction = (effStart != null && end > effStart)
-        ? (end - now) / (end - effStart)
-        : 1;
+      if (effStart != null && end > effStart)
+        progress = ((now - effStart) / (end - effStart)) * 100;
     }
-    fraction = Math.min(1, Math.max(0, fraction));
 
     refs.status.textContent = status;
     refs.status.className = "card-status " + statusClass;
-    refs.ringProg.style.strokeDashoffset = (RING_CIRC * (1 - fraction)).toFixed(2);
-    refs.percent.textContent = Math.round((1 - fraction) * 100) + "%";
 
-    const s  = Math.floor(remainingMs / 1000);
-    const days = Math.floor(s / 86400);
-    const hh = Math.floor((s % 86400) / 3600);
-    const mm = Math.floor((s % 3600) / 60);
-    const ss = s % 60;
-    refs.days.textContent = days;
-    refs.clock.textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
+    const s = Math.floor(remainingMs / 1000);
+    setUnit(refs.days,    Math.floor(s / 86400));
+    setUnit(refs.hours,   Math.floor((s % 86400) / 3600));
+    setUnit(refs.minutes, Math.floor((s % 3600) / 60));
+    setUnit(refs.seconds, s % 60);
+
+    if (progress === null) {
+      refs.bar.parentElement.style.display = "none";
+      refs.label.style.display = "none";
+    } else {
+      refs.bar.parentElement.style.display = "";
+      refs.label.style.display = "";
+      const p = Math.min(100, Math.max(0, progress));
+      refs.bar.style.width = p.toFixed(1) + "%";
+      refs.label.textContent = now >= end ? "اكتمل" : `مضى ${p.toFixed(0)}٪`;
+    }
   });
 }
 
